@@ -1,0 +1,12 @@
+---
+title: "p8105_hw3_zz3166"
+author: "Zihan Zhao"
+date: "2024-10-10"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
