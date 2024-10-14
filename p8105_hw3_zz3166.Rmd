@@ -9,4 +9,40 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(p8105.datasets)
+library(tidyverse)
+data("ny_noaa")
+```
+
+## Problem 1
+
+Dataset Overview
+```{r}
+str(ny_noaa)
+dim(ny_noaa)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
