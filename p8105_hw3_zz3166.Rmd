@@ -12,8 +12,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(p8105.datasets)
 library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(readr)
 library(ggridges)
 library(patchwork)
+library(knitr)
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -101,6 +105,16 @@ hex + ridge
 
 ## Problem 2
 
+```{r}
+# Load demographic data
+demographics <- read_csv("NHANES_Demographics.csv")
+
+# Load accelerometer data
+accelerometer <- read_csv("NHANES_Accelerometer.csv")
+
+
+
+```
 
 
 
