@@ -149,7 +149,7 @@ ggplot(merged_data, aes(x = education, y = age, fill = sex)) +
   geom_boxplot() +
   labs(title = "Age Distribution by Gender and Education", x = "Education Level", y = "Age") +
   theme_minimal() +
-  scale_fill_manual(values = c("male" = "blue", "female" = "red")) # Optional: Add custom colors for clarity
+  scale_fill_manual(values = c("male" = "#e7d400", "female" = "#5e3c99")) # Optional: Add custom colors for clarity
 
 ```
 The boxplot shows that participants with less education ("Less than high school") tend to be older, with both men and women having higher median ages compared to those with higher education. Men in the "More than high school" category exhibit a wider age range compared to women. Overall, there is more variability in age among men than women in higher education categories, while the age distributions for men and women in the "High school equivalent" group are more similar.
