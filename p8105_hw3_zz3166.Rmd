@@ -39,7 +39,7 @@ scale_fill_discrete = scale_fill_viridis_d
 ```
 
 
- Problem 2
+# Problem 2
 
 Accelerometers provide an objective method to study physical activity in observational studies. The NHANES accelerometer data captures activity in one-minute intervals across 24 hours. This analysis uses accelerometer and demographic data collected on 250 participants in the NHANES study.
 
