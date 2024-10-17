@@ -11,18 +11,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-library(p8105.datasets)
 library(tidyverse)
 library(dplyr)
 library(tidyr)
 library(readr)
-library(ggridges)
-library(patchwork)
 library(knitr)
 library(janitor)
 library(ggplot2)
 library(kableExtra)
-
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -41,13 +37,18 @@ options(
 
 scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
-
-data("ny_noaa")
 ```
 
-## Problem 2
+# Problem 2
 
-We start by loading the two datasets: demographic data (`covar`) and accelerometer data (`accel`). We clean the demographic data by renaming columns, recoding categorical variables, and filtering out participants below 21 years of age. Missing data is also removed.
+Accelerometers provide an objective method to study physical activity in observational studies. The NHANES accelerometer data captures activity in one-minute intervals across 24 hours. This analysis uses accelerometer and demographic data collected on 250 participants in the NHANES study.
+
+The task involves cleaning and organizing the data, creating summary tables and visualizations, and analyzing the relationship between activity levels, age, gender, and education.
+
+## Data Cleaning and Preparation
+
+We start by loading the demographic data (`covar`) and accelerometer data (`accel`). The demographic data is cleaned by renaming columns, recoding categorical variables, and filtering out participants under the age of 21. Missing data is also removed.
+
 ```{r}
 # Step 1: Load demographic data
 covar <- read_csv("nhanes_covar.csv", skip=4 ) |>
@@ -71,7 +72,10 @@ accel <- read_csv("nhanes_accel.csv") |>
 ```
 First, I cleaned the demographic data by renaming columns and recoding categorical variables such as `sex` and `education` into meaningful labels. I also filtered out participants under the age of 21 and removed any rows with missing demographic data. The accelerometer data was loaded and merged with the cleaned demographic data using `SEQN` as the common identifier.
 
-Next, I created a summary table to display the number of men and women in each education category.
+## Summary Table of Men and Women by Education Level
+
+We now create a table showing the number of men and women in each education category.
+
 ```{r}
 # Step 2: Create a table for the number of men and women in each education category
 education_gender_table <- merged_data |>
@@ -84,6 +88,10 @@ knitr::kable(education_gender_table, caption = "Number of Men and Women in Each 
 ```
 This code groups the `merged_data` by `education` and `sex` and counts the number of participants in each group. Then, `pivot_wider()` is used to spread the `sex` variable across columns, resulting in a table that shows the number of men and women in each education category.
 
+
+## Age Distribution by Gender and Education
+
+Here, we present a boxplot to visualize the age distribution across education levels, separating by gender.
 ```{r}
 # Step 3: Boxplot of age distribution by education level and gender
 ggplot(merged_data, aes(x = education, y = age, fill = sex)) +
@@ -93,7 +101,12 @@ ggplot(merged_data, aes(x = education, y = age, fill = sex)) +
   scale_fill_manual(values = c("male" = "#e7d400", "female" = "#5e3c99")) # Optional: Add custom colors for clarity
 
 ```
-The boxplot shows that participants with less education ("Less than high school") tend to be older, with both men and women having higher median ages compared to those with higher education. Men in the "More than high school" category exhibit a wider age range compared to women. Overall, there is more variability in age among men than women in higher education categories, while the age distributions for men and women in the "High school equivalent" group are more similar.
+
+**Commentary**: The boxplot shows that participants with less education ("Less than high school") tend to be older, with both men and women having higher median ages compared to those with higher education. Men in the "More than high school" category exhibit a wider age range compared to women. Overall, there is more variability in age among men than women in higher education categories, while the age distributions for men and women in the "High school equivalent" group are more similar.
+
+## Total Activity vs. Age by Education and Gender
+
+We aggregate minute-by-minute activity data to compute a total activity variable for each participant and plot it against age, with separate panels for each education level.
 
 ```{r}
 # Step 4: Calculate total activity per participant by summing minute-wise activity (MIMS values)
@@ -110,18 +123,13 @@ ggplot(total_activity_data, aes(x = age, y = total_activity, color = sex)) +
        x = "Age", 
        y = "Total Activity (MIMS)") +
   theme_minimal()
-
-
-
-
-
-
-
-
-
 ```
-The plot shows that total activity decreases with age across all education levels for both men and women. The trend is more pronounced in participants with "Less than high school" education, where both men and women exhibit steep declines in activity as they age. In the "More than high school" group, men tend to have slightly higher activity levels than women, while in the "High school equivalent" group, the difference between men and women is smaller. Overall, the negative association between age and activity is consistent, though the decline rate and gender differences vary by education level.
 
+**Commentary**: The plot shows that total activity decreases with age across all education levels for both men and women. The trend is more pronounced in participants with "Less than high school" education, where both men and women exhibit steep declines in activity as they age. In the "More than high school" group, men tend to have slightly higher activity levels than women, while in the "High school equivalent" group, the difference between men and women is smaller. Overall, the negative association between age and activity is consistent, though the decline rate and gender differences vary by education level.
+
+## 24-Hour Activity Time Course by Education and Gender
+
+Lastly, we explore the 24-hour activity pattern for each education level, using different colors to represent gender.
 
 ```{r}
 # Step 5: 24-Hour Activity Time Course by Education Level and Gender
@@ -136,15 +144,18 @@ ggplot(time_course_data, aes(x = minute, y = MIMS_value, color = sex)) +
        x = "Minute of the Day", 
        y = "Average MIMS Value") +
   theme_minimal()
-
 ```
-The plot shows similar 24-hour activity patterns for men and women across all education levels, with peaks during the day and drops at night. Women generally exhibit slightly higher activity levels than men, particularly in the "Less than high school" and "More than high school" groups. Activity patterns are consistent, with minor gender differences in peak times.
+
+**Commentary**: The plot shows similar 24-hour activity patterns for men and women across all education levels, with peaks during the day and drops at night. Women generally exhibit slightly higher activity levels than men, particularly in the "Less than high school" and "More than high school" groups. Activity patterns are consistent, with minor gender differences in peak times.
 
 
 
+# Problem 3
+
+Citi Bike is a popular bike-sharing system in New York City that offers pedal-powered and electric bikes. This analysis examines 1% of all Citi Bike rides with a duration less than 4 hours from four specific months across 2020 and 2024. The goal of this analysis is to explore patterns in ridership, the popularity of stations, and the distribution of ride durations, considering membership status and bike type.
 
 
-## Problem 3
+## Data Preparation
 
 ```{r}
 # Load and clean January 2020 data
@@ -177,6 +188,7 @@ july24_df =
 
 ```
 
+Next, the data from all four months is combined and encoded appropriately for further analysis.
 ```{r}
 # Combine all datasets and encode variables
 citi_df = 
@@ -188,13 +200,9 @@ citi_df =
     member_casual = factor(member_casual, levels = c("member", "casual"))  # Encode membership type as factor
   )
 
-str(citi_df)
 ```
 
-
-
-
-
+## Total Rides By Member Type and Month
 
 ```{r}
 # Step 2: Summarise total rides by membership type and month_year
@@ -211,9 +219,13 @@ ride_summary |>
   row_spec(0, bold = TRUE, background = "#D3D3D3")  # Bold and shade the header row
 ```
 
+From this table, it is evident that members consistently take more rides than casual riders across all time periods. The total number of rides in July 2024 has significantly increased compared to July 2020, reflecting the growing popularity of the Citi Bike system.
 
 
 
+## Top 5 Starting Stations in July 2024
+
+We then identify the top 5 starting stations for rides in July 2024 based on the number of trips that started from these locations.
 ```{r}
 # Step 3: Filter for July 2024 and count rides per station
 july24_stations <- citi_df |>
@@ -230,17 +242,15 @@ july24_stations |>
   column_spec(1, bold = TRUE) |>  # Bold the first column (station names)
   column_spec(2, width = "8em") |>  # Adjust the width of the total rides column
   row_spec(0, bold = TRUE, background = "#D3D3D3")  # Bold and shade the header row
-
-
-
-
-
-
-
 ```
 
+The Pier 61 at Chelsea Piers station was the most popular starting station in July 2024, followed closely by University Pl & E 14 St and W 21 St & 6 Ave. These stations are centrally located and likely cater to both casual riders and daily commuters.
 
 
+
+## Median Ride Duration by Day of the Week, Month, and Year
+
+Next, we investigate the median ride duration across different days of the week, considering both month and year. This helps in identifying patterns related to ride length based on the time of the week.
 ```{r}
 # Step 4: Calculate median ride duration by weekdays, month, and year
 median_duration <- citi_df |>
@@ -260,6 +270,14 @@ ggplot(median_duration, aes(x = weekdays, y = median_duration, color = month_yea
 
 ```
 
+
+The plot shows that **July 2020** had longer median ride durations across all days of the week compared to **January 2020** and **January 2024**. There is also a noticeable difference in **July 2024**, where the median ride durations are lower than in **July 2020**, possibly reflecting the increased efficiency of electric bikes in 2024.
+
+
+
+## Distribution of Ride Duration by Month, Membership, and Bike Type (2024)
+
+Finally, we explore the distribution of ride durations for 2024, focusing on how membership status, bike type, and month affect ride duration.
 ```{r}
 # Step 5: Filter the data for the year 2024 and remove NA values for duration
 citi_2024_data <- citi_df |> 
@@ -277,53 +295,15 @@ ggplot(citi_2024_data, aes(x = duration, fill = member_casual)) +
 
 ```
 
+The density plot for **2024** highlights several key patterns in ride durations based on membership status, bike type, and seasonality.
 
+**Members** consistently take shorter trips compared to **casual riders**, indicating that members likely use the system for regular, shorter trips, possibly for commuting. In contrast, casual riders tend to have longer ride durations, suggesting they use the service for less frequent, leisure-oriented rides.
 
+When comparing **electric bikes** and **classic bikes**, electric bikes show a clear preference for short trips. Both members and casual riders, especially casual riders, tend to use electric bikes for quick, efficient rides. On the other hand, **classic bikes** have a wider range of ride durations, particularly among casual riders, indicating that they are used for both short and longer trips.
 
+**Seasonal differences** are also evident. In **July 2024**, there are more longer rides, especially for casual riders, reflecting more leisurely and extended trips during the summer months. In **January 2024**, ride durations are generally shorter across both groups, likely due to colder weather, which favors shorter, more utilitarian trips.
 
-
-```{r}
-# Step 5: Filter the data for the year 2024 and remove NA values for duration
-citi_2024_data <- citi_df |> 
-  filter(month_year %in% c("jan_2024", "july_2024"), !is.na(duration))
-
-# Cap the duration at 60 minutes for visualization
-citi_2024_data <- citi_2024_data |> 
-  mutate(duration_capped = ifelse(duration > 100, 100, duration))  # Cap ride durations to 60 mins
-
-# Plot the distribution of ride durations (capped at 60) by month, membership type, and bike type for 2024
-ggplot(citi_2024_data, aes(x = duration_capped, fill = member_casual)) +
-  geom_density(alpha = 0.7, color = NA) +  # Use density plot for better visualization of distribution
-  facet_grid(month_year ~ rideable_type) +
-  labs(title = "Ride Duration Distribution by Month, Membership, and Bike Type (2024)",
-       x = "Ride Duration (minutes, capped at 100)", y = "Density") +
-  theme_minimal() +
-  scale_fill_manual(values = c("member" = "#1f77b4", "casual" = "#ff7f0e")) +  # Custom colors for member and casual
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for clarity
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Overall, the results indicate that **electric bikes** are ideal for shorter, efficient rides, while **classic bikes** are more versatile and commonly used for longer trips, especially during the summer.
 
 
 
