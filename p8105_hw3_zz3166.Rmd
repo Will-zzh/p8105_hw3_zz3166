@@ -247,7 +247,6 @@ july24_stations |>
 The Pier 61 at Chelsea Piers station was the most popular starting station in July 2024, followed closely by University Pl & E 14 St and W 21 St & 6 Ave. These stations are centrally located and likely cater to both casual riders and daily commuters.
 
 
-
 ## Median Ride Duration by Day of the Week, Month, and Year
 
 Next, we investigate the median ride duration across different days of the week, considering both month and year. This helps in identifying patterns related to ride length based on the time of the week.
