@@ -19,6 +19,9 @@ library(ggridges)
 library(patchwork)
 library(knitr)
 library(janitor)
+library(ggplot2)
+library(kableExtra)
+
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -205,21 +208,90 @@ The plot shows similar 24-hour activity patterns for men and women across all ed
 
 ## Problem 3
 
+```{r}
+# Load and clean January 2020 data
+jan20_df = 
+  read_csv("Jan 2020 Citi.csv", na = c("NA", ".", "")) |> 
+  janitor::clean_names() |> 
+  drop_na() |>
+  mutate(month_year = "jan_2020")
 
+# Load and clean January 2024 data
+jan24_df = 
+  read_csv("Jan 2024 Citi.csv", na = c("NA", ".", "")) |> 
+  janitor::clean_names() |> 
+  drop_na() |>
+  mutate(month_year = "jan_2024")
 
+# Load and clean July 2020 data
+july20_df = 
+  read_csv("July 2020 Citi.csv", na = c("NA", ".", "")) |> 
+  janitor::clean_names() |> 
+  drop_na() |>
+  mutate(month_year = "july_2020")
 
+# Load and clean July 2024 data
+july24_df = 
+  read_csv("July 2024 Citi.csv", na = c("NA", ".", "")) |> 
+  janitor::clean_names() |> 
+  drop_na() |>
+  mutate(month_year = "july_2024")
+
+```
+
+```{r}
+# Combine all datasets and encode variables
+citi_df = 
+  bind_rows(jan20_df, july20_df, jan24_df, july24_df) |> 
+  mutate(
+    month_year = factor(month_year, levels = c("jan_2020", "july_2020", "jan_2024", "july_2024"), ordered = TRUE),
+    weekdays = factor(weekdays, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")),
+    rideable_type = factor(rideable_type),  # Encode bike type as factor
+    member_casual = factor(member_casual, levels = c("member", "casual"))  # Encode membership type as factor
+  )
 
+str(citi_df)
+```
 
 
 
 
 
 
+```{r}
+# Step 2: Summarise total rides by membership type and month_year
+ride_summary = citi_df |> 
+  group_by(member_casual, month_year) |> 
+  summarise(total_rides = n(), .groups = 'drop') |>
+  tidyr::pivot_wider(names_from = month_year, values_from = total_rides)
+# Create a better-formatted table using kableExtra
+ride_summary |> 
+  kbl(caption = "Total Rides by Member Type, Year, and Month") |> 
+  kable_classic(full_width = F, html_font = "Cambria") |> 
+  column_spec(1, bold = TRUE) |>  # Bold the first column (member type)
+  column_spec(2:5, width = "5em") |>  # Adjust the column width for a consistent look
+  row_spec(0, bold = TRUE, background = "#D3D3D3")  # Bold and shade the header row
+```
 
 
 
 
+```{r}
+# Step 3: Filter for July 2024 and count rides per station
+july24_stations <- citi_df |>
+  filter(month_year == "july_2024") |>
+  group_by(start_station_name) |>
+  summarise(total_rides = n(), .groups = 'drop') |>
+  arrange(desc(total_rides)) |>
+  head(5)  # Get the top 5 stations
 
+# Display the table in a reader-friendly format
+july24_stations |> 
+  kbl(caption = "Top 5 Starting Stations in July 2024") |> 
+  kable_classic(full_width = F, html_font = "Cambria") |> 
+  column_spec(1, bold = TRUE) |>  # Bold the first column (station names)
+  column_spec(2, width = "8em") |>  # Adjust the width of the total rides column
+  row_spec(0, bold = TRUE, background = "#D3D3D3")  # Bold and shade the header row
 
 
 
@@ -227,69 +299,71 @@ The plot shows similar 24-hour activity patterns for men and women across all ed
 
 
 
+```
 
 
 
+```{r}
+# Step 4: Calculate median ride duration by weekdays, month, and year
+median_duration <- citi_df |>
+  group_by(weekdays, month_year) |>
+  summarise(median_duration = median(duration, na.rm = TRUE), .groups = 'drop')
 
+# Create a plot to visualize the effects of day of the week, month, and year on median ride duration
+ggplot(median_duration, aes(x = weekdays, y = median_duration, color = month_year, group = month_year)) +
+  geom_line(size = 1.2) +  # Draw line plots to show trends
+  facet_wrap(~ month_year) +  # Facet the plot by month and year
+  labs(title = "Median Ride Duration by Day of the Week, Month, and Year",
+       x = "Day of the Week", y = "Median Ride Duration (minutes)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels for clarity
+  scale_color_manual(values = c("jan_2020" = "#1f77b4", "july_2020" = "#ff7f0e", 
+                                "jan_2024" = "#2ca02c", "july_2024" = "#d62728"))  # Custom colors for each month_year
 
+```
 
+```{r}
+# Step 5: Filter the data for the year 2024 and remove NA values for duration
+citi_2024_data <- citi_df |> 
+  filter(month_year %in% c("jan_2024", "july_2024"), !is.na(duration))
 
+# Plot the distribution of ride durations by month, membership type, and bike type for 2024
+ggplot(citi_2024_data, aes(x = duration, fill = member_casual)) +
+  geom_density(alpha = 0.7, color = NA) +  # Use density plot for better visualization of distribution
+  facet_grid(month_year ~ rideable_type) +
+  labs(title = "Ride Duration Distribution by Month, Membership, and Bike Type (2024)",
+       x = "Ride Duration (minutes)", y = "Density") +
+  theme_minimal() +
+  scale_fill_manual(values = c("member" = "#1f77b4", "casual" = "#ff7f0e")) +  # Custom colors for member and casual
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for clarity
 
+```
 
 
 
 
 
 
+```{r}
+# Step 5: Filter the data for the year 2024 and remove NA values for duration
+citi_2024_data <- citi_df |> 
+  filter(month_year %in% c("jan_2024", "july_2024"), !is.na(duration))
 
+# Cap the duration at 60 minutes for visualization
+citi_2024_data <- citi_2024_data |> 
+  mutate(duration_capped = ifelse(duration > 100, 100, duration))  # Cap ride durations to 60 mins
 
+# Plot the distribution of ride durations (capped at 60) by month, membership type, and bike type for 2024
+ggplot(citi_2024_data, aes(x = duration_capped, fill = member_casual)) +
+  geom_density(alpha = 0.7, color = NA) +  # Use density plot for better visualization of distribution
+  facet_grid(month_year ~ rideable_type) +
+  labs(title = "Ride Duration Distribution by Month, Membership, and Bike Type (2024)",
+       x = "Ride Duration (minutes, capped at 100)", y = "Density") +
+  theme_minimal() +
+  scale_fill_manual(values = c("member" = "#1f77b4", "casual" = "#ff7f0e")) +  # Custom colors for member and casual
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for clarity
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```
 
 
 
